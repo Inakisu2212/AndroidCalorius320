@@ -1,10 +1,10 @@
 package com.example.calorius;
 
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,20 +57,25 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             @Override
             @TargetApi(11)
             public void onClick(View v) {
-                //TareaWSObtener tareaAsincrona = new TareaWSObtener();
-              //  textoEmail = (TextView) v.findViewById(R.id.emailText);
-              //  textoPasswd = (TextView) v.findViewById(R.id.passwdText);
-                String stringEmail = textoEmail.getText().toString();
+               String stringEmail = textoEmail.getText().toString();
                 String stringPasswd = textoPasswd.getText().toString();
-                /*tareaAsincrona.execute(textoEmail.getText().toString(),
-                        textoPasswd.getText().toString());*/
-                //accionLogin(textoEmail.getText().toString(), textoPasswd.getText().toString());
                 accionLogin(stringEmail, stringPasswd);
+
             }
+        });
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((MainActivity)getActivity()).actualizarHeader();
+            }
+
         });
         return v;
     }
-
+    public  void vibrate(LoginFragment fragment, int tiempo) {
+        Vibrator vibrator = (Vibrator) fragment.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(tiempo);
+    }
     @Override
     public void onClick(View v) {
 
@@ -111,7 +116,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     //Que suelte un toast diciendo que es correcto
                     getActivity().runOnUiThread(new Runnable() {
                         public void run() {
+                            Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                            vibrator.vibrate(60);
                             Toast.makeText(getActivity(),"Login correcto", Toast.LENGTH_SHORT).show();
+                            //Actualizamos el header para que aparezca el nombre
+                            ((MainActivity)getActivity()).actualizarHeader();
                         }
                     });
                 }else{
@@ -119,6 +128,10 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                     getActivity().runOnUiThread(new Runnable() {
                         public void run() {
                             Toast.makeText(getActivity(),"Login incorrecto", Toast.LENGTH_SHORT).show();
+                            Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                            long[] pattern = { 0,60,50,60,50,60};
+                            vibrator.vibrate(pattern,-1);
+
                         }
                     });
 

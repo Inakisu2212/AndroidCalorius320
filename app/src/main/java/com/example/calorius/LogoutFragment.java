@@ -1,11 +1,12 @@
 package com.example.calorius;
 
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,9 +29,11 @@ public class LogoutFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         View v = inflater.inflate(R.layout.fragment_logout, container, false);
 
         botonLogout = (Button) v.findViewById(R.id.logoutButton);
+        botonLogout.setVisibility(v.VISIBLE);
         botonLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,6 +53,14 @@ public class LogoutFragment extends Fragment {
                     }
 
                 });
+                Fragment freg = new LoginFragment();
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                Fragment fragmentLogI = fragmentManager.findFragmentById(R.id.frameLayout);
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.frameLayout2, freg);
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
+                botonLogout.setVisibility(v.INVISIBLE);
             }
         });
         return v;
