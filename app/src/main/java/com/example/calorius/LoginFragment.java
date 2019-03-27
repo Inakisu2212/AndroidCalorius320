@@ -3,14 +3,9 @@ package com.example.calorius;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,26 +13,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.calorius.regCalFragment;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.calorius.objetos.usuario;
+import com.example.calorius.objetosServiceInterfaces.usuarioService;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-import cz.msebera.android.httpclient.HttpResponse;
-import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.methods.HttpGet;
-import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
-import cz.msebera.android.httpclient.util.EntityUtils;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 
 /**
@@ -47,11 +33,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     private Button botonLogin;
     private TextView textoEmail, textoPasswd;
-    private TextView lblResultado;
+    //private TextView lblResultado;
     private SharedPreferences sharedPreferences;
+    private usuarioService usuService; //Esta clase la crea más adelante el retrofit
+    private final String laUrl = "http://10.111.66.10:567/";
+    private List<usuario> listaUsu = new ArrayList<usuario>();
 
     public LoginFragment() {
-        // Required empty public constructor
+        // Contructor publico requerido. Vacio
     }
 
     @Override
@@ -59,19 +48,24 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_login, container, false);
-
         textoEmail = (TextView) v.findViewById(R.id.emailText);
         textoPasswd = (TextView) v.findViewById(R.id.passwdText);
 
         botonLogin = (Button) v.findViewById(R.id.loginButton);
+
         botonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             @TargetApi(11)
             public void onClick(View v) {
-                TareaWSObtener tareaAsincrona = new TareaWSObtener();
-
-                tareaAsincrona.execute(textoEmail.getText().toString(),
-                        textoPasswd.getText().toString());
+                //TareaWSObtener tareaAsincrona = new TareaWSObtener();
+              //  textoEmail = (TextView) v.findViewById(R.id.emailText);
+              //  textoPasswd = (TextView) v.findViewById(R.id.passwdText);
+                String stringEmail = textoEmail.getText().toString();
+                String stringPasswd = textoPasswd.getText().toString();
+                /*tareaAsincrona.execute(textoEmail.getText().toString(),
+                        textoPasswd.getText().toString());*/
+                //accionLogin(textoEmail.getText().toString(), textoPasswd.getText().toString());
+                accionLogin(stringEmail, stringPasswd);
             }
         });
         return v;
@@ -82,7 +76,62 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
     }
 
+    public void accionLogin(String emailIntrod, String passwdIntrod){
+        final String emilio = emailIntrod;
+        final String passwd = passwdIntrod;
 
+        Retrofit instRetrofit = new Retrofit.Builder().baseUrl(laUrl)
+                .addConverterFactory(GsonConverterFactory.create()).build();
+        usuService = instRetrofit.create(usuarioService.class);
+
+        Call<List<usuario>> listaUsus = usuService.getUsuarios();
+
+        listaUsus.enqueue(new Callback<List<usuario>>(){
+            @Override
+            public void onResponse(Call<List<usuario>> call, Response<List<usuario>> response){
+                listaUsu = response.body();
+                boolean correcto = false; //Para comprobar coindicendia email y passwd
+                for(int i = 0; i < listaUsu.size(); i++){
+                    String emails = listaUsu.get(i).getEmailUsuario();
+                    String passwds = listaUsu.get(i).getPasswordUsuario();
+                    if(emails.equals(emilio) && passwds.equals(passwd) ){
+                        correcto = true;
+                    }
+                }
+                //Shared preferences
+                sharedPreferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
+                if(correcto){
+                    System.out.println("-----> Login correcto!");
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("Email", emilio);
+                    editor.putString("Contra",passwd);
+                    editor.commit();
+
+                    //Que suelte un toast diciendo que es correcto
+                    getActivity().runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(getActivity(),"Login correcto", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }else{
+                    //Que suelte un toast diciendo que es incorrecto
+                    getActivity().runOnUiThread(new Runnable() {
+                        public void run() {
+                            Toast.makeText(getActivity(),"Login incorrecto", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                }
+            }
+            @Override
+            public void onFailure(Call<List<usuario>> call, Throwable t) {
+
+            }
+        });
+
+    }
+
+/*
     //A partir de aquí pasan cosas de HTTP REST
     @TargetApi(11)
     private class TareaWSObtener extends AsyncTask<String,Integer,Boolean> {
@@ -180,6 +229,6 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
             }
         }
-    }
+    }*/
 
 }
