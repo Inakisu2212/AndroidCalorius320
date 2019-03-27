@@ -36,7 +36,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     //private TextView lblResultado;
     private SharedPreferences sharedPreferences;
     private usuarioService usuService; //Esta clase la crea más adelante el retrofit
-    private final String laUrl = "http://10.111.66.10:567/";
+    private final String laUrl = "http://192.168.0.24:567/";
     private List<usuario> listaUsu = new ArrayList<usuario>();
 
     public LoginFragment() {

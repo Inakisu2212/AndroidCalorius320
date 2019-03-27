@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +28,26 @@ public class LogoutFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-        View v = inflater.inflate(R.layout.fragment_logout, container, false);
+        View v = inflater.inflate(R.layout.fragment_login, container, false);
+        SharedPreferences preferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.commit();
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(getActivity(),"Sesión cerrada", Toast.LENGTH_SHORT).show();
+            }
+        });
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((MainActivity)getActivity()).actualizarHeader();
+            }
 
+        });
         botonLogout = (Button) v.findViewById(R.id.logoutButton);
-        botonLogout.setVisibility(v.VISIBLE);
-        botonLogout.setOnClickListener(new View.OnClickListener() {
+        //botonLogout.setVisibility(v.VISIBLE);
+        /*botonLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 SharedPreferences preferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
@@ -62,7 +75,7 @@ public class LogoutFragment extends Fragment {
                 fragmentTransaction.commit();
                 botonLogout.setVisibility(v.INVISIBLE);
             }
-        });
+        });*/
         return v;
     }
 }
