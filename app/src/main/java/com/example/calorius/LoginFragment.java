@@ -102,6 +102,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 sharedPreferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
                 if(correcto){
                     System.out.println("-----> Login correcto!");
+                    //Guardar información en sharedPreferences
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString("Email", emilio);
                     editor.putString("Contra",passwd);
