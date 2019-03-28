@@ -38,6 +38,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     private usuarioService usuService; //Esta clase la crea más adelante el retrofit
     private final String laUrl = "http://10.111.66.10:567/";
     private List<usuario> listaUsu = new ArrayList<usuario>();
+    private usuario elUsuario;
 
     public LoginFragment() {
         // Contructor publico requerido. Vacio
@@ -89,20 +90,21 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 .addConverterFactory(GsonConverterFactory.create()).build();
         usuService = instRetrofit.create(usuarioService.class);
 
-        Call<List<usuario>> listaUsus = usuService.getUsuarios();
+        Call<usuario> elUsu = usuService.getUsuario(emilio);
 
-        listaUsus.enqueue(new Callback<List<usuario>>(){
+        elUsu.enqueue(new Callback<usuario>(){
             @Override
-            public void onResponse(Call<List<usuario>> call, Response<List<usuario>> response){
-                listaUsu = response.body();
+            public void onResponse(Call<usuario> call, Response<usuario> response){
+
+                elUsuario = response.body();
                 boolean correcto = false; //Para comprobar coindicendia email y passwd
-                for(int i = 0; i < listaUsu.size(); i++){
-                    String emails = listaUsu.get(i).getEmailUsuario();
-                    String passwds = listaUsu.get(i).getPasswordUsuario();
+
+                    String emails = elUsuario.getEmailUsuario();
+                    String passwds = elUsuario.getPasswordUsuario();
                     if(emails.equals(emilio) && passwds.equals(passwd) ){
                         correcto = true;
                     }
-                }
+
                 //Shared preferences
                 sharedPreferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
                 if(correcto){
@@ -123,6 +125,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                             ((MainActivity)getActivity()).actualizarHeader();
                         }
                     });
+
                 }else{
                     //Que suelte un toast diciendo que es incorrecto
                     getActivity().runOnUiThread(new Runnable() {
@@ -138,7 +141,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 }
             }
             @Override
-            public void onFailure(Call<List<usuario>> call, Throwable t) {
+            public void onFailure(Call<usuario> call, Throwable t) {
 
             }
         });

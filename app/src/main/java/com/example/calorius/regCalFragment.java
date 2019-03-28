@@ -47,7 +47,7 @@ public class regCalFragment extends Fragment {
     private String correoLog = "a";
     private Spinner dropdownCant;
     private final String laUrl = "http://10.111.66.10:567/";
-    private alimentosService aliService;
+    //private alimentosService aliService;
     private caloriasService calService;
     private List<alimentos> listaAli = new ArrayList<alimentos>();
     //private int numeroAlimento;
@@ -92,7 +92,7 @@ public class regCalFragment extends Fragment {
         dropdownCant = (Spinner) v.findViewById(R.id.spinnerCant);
         //Creamos una lista para los alimentos del spinner
 
-        final List<alimentos> alsEnLista = listaAli;
+        //final List<alimentos> alsEnLista = listaAli;
         String[]  spinnerAlAr = null;
         final String[] spinnerNombreAlimentosArray = new String[listaNombreAls.size()];//Array con nombres alim.
         final String[] spinnerAlimentosArray = new String[listaCodigoAls.size()];//Array con objs. alim.
@@ -182,9 +182,10 @@ public class regCalFragment extends Fragment {
         //final String emilio = emailIntrod;
         //final String passwd = passwdIntrod;
 
-        Retrofit instRetrofit = new Retrofit.Builder().baseUrl(laUrl)
-                .addConverterFactory(GsonConverterFactory.create()).build();
-        aliService = instRetrofit.create(alimentosService.class);
+        Retrofit instaRetrofit = new Retrofit.Builder().baseUrl(laUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        alimentosService aliService = instaRetrofit.create(alimentosService.class);
 
         Call<List<alimentos>> listaAlis = aliService.getAlimentos();
 
@@ -193,6 +194,8 @@ public class regCalFragment extends Fragment {
             public void onResponse(Call<List<alimentos>> call, Response<List<alimentos>> response){
                 if(response.isSuccessful()){
                     listaAli = response.body();
+                }else{
+                    System.out.println("---------> "+ response.errorBody());
                 }
 
                 for(int i = 0; i < listaAli.size(); i++){
