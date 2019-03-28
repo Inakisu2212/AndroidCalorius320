@@ -6,45 +6,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.text.SimpleDateFormat;
-import android.icu.util.Calendar;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.StrictMode;
-import android.provider.ContactsContract;
+import android.os.Vibrator;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CalendarView;
-import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.calorius.objetos.alimentos;
+import com.example.calorius.objetos.calorias;
+import com.example.calorius.objetosServiceInterfaces.alimentosService;
+import com.example.calorius.objetosServiceInterfaces.caloriasService;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
-import cz.msebera.android.httpclient.HttpResponse;
-import cz.msebera.android.httpclient.client.ClientProtocolException;
-import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.methods.HttpGet;
-import cz.msebera.android.httpclient.client.methods.HttpPost;
-import cz.msebera.android.httpclient.entity.StringEntity;
-import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
-import cz.msebera.android.httpclient.util.EntityUtils;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 
 /**
@@ -59,7 +46,14 @@ public class regCalFragment extends Fragment {
     private String fechaSeleccionada;
     private String correoLog = "a";
     private Spinner dropdownCant;
+    private final String laUrl = "http://10.111.66.10:567/";
+    private alimentosService aliService;
+    private caloriasService calService;
+    private List<alimentos> listaAli = new ArrayList<alimentos>();
+    //private int numeroAlimento;
 
+    private ArrayList<String> listaNombreAls;
+    private ArrayList<String> listaCodigoAls;
     //Estos son params que damos a AsyncTask
     private String nombreAlSel;
     private String fechaAlSel;
@@ -88,7 +82,7 @@ public class regCalFragment extends Fragment {
 
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_reg_cal, container, false);
-
+        obtenerAlimentos();
         //Obtenemos que comida se ha seleccionado
 
         //Obtenemos los spinner y calendario desde el xml
@@ -97,17 +91,17 @@ public class regCalFragment extends Fragment {
         calendar = (CalendarView) v.findViewById(R.id.calendarView);
         dropdownCant = (Spinner) v.findViewById(R.id.spinnerCant);
         //Creamos una lista para los alimentos del spinner
-        final JSONArray jsonAl = obtenerAlimentos();
+
+        final List<alimentos> alsEnLista = listaAli;
         String[]  spinnerAlAr = null;
-        String[] spinnerNombreAlimentosArray = new String[jsonAl.length()];//Array con nombres alim.
-        final String[] spinnerAlimentosArray = new String[jsonAl.length()];//Array con objs. alim.
-        for(int i = 0; i<jsonAl.length();i++){
+        final String[] spinnerNombreAlimentosArray = new String[listaNombreAls.size()];//Array con nombres alim.
+        final String[] spinnerAlimentosArray = new String[listaCodigoAls.size()];//Array con objs. alim.
+        for(int i = 0; i<listaNombreAls.size();i++){
             try {
-                JSONObject jAl = jsonAl.getJSONObject(i);
-                spinnerAlimentosArray[i] = jAl.toString();//Lista para obtener obj. alim. al seleccionar del spinner
-                String nombre = jAl.getString("nombre");
-                spinnerNombreAlimentosArray[i]=nombre; //Introd. nombres alim. en spinner
-            } catch (JSONException e) {
+                spinnerAlimentosArray[i] = listaCodigoAls.get(i).toString();//Lista para obtener obj. alim. al seleccionar del spinner
+                //String nombre = jAl.getString("nombre");
+                spinnerNombreAlimentosArray[i]=listaNombreAls.get(i); //Introd. nombres alim. en spinner
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -149,22 +143,15 @@ public class regCalFragment extends Fragment {
                 //Obtener el id del alimento que se ha seleccionado
                 int idAlSeleccionado = dropdownAl.getSelectedItemPosition();
                 //Obtenemos el jsonObject del alimento corresp. al id selecc.
-                JSONObject JOAlSel = new JSONObject();
-                try {
-                    JOAlSel = jsonAl.getJSONObject(idAlSeleccionado);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                //numeroAlimento = spinnerAlimentosArray[idAlSeleccionado];
+
                 //Obtenemos la cantidad de alimentos que queremos introducir
                 cantidadAlSel = dropdownCant.getSelectedItem().toString();
-                //Obtenemos los parámetros del objeto para enviarlos a asynctask
-                try {
-                    nombreAlSel = JOAlSel.getString("nombre");
-                    codigoAlSel= JOAlSel.getString("codigo");
-                 //   cantidadAlSel = JOAlSel.getString("calorias");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+
+                //Obtenemos los parámetros del objeto para enviarlos a método introducirCalorias()
+                nombreAlSel = spinnerNombreAlimentosArray[idAlSeleccionado];
+                codigoAlSel= spinnerAlimentosArray[idAlSeleccionado];
+
                 Intent intent = getActivity().getIntent();
                 Bundle b = intent.getExtras();
 
@@ -174,19 +161,54 @@ public class regCalFragment extends Fragment {
 //                    correoLog = Email;
 //                }
 
-                String alSeleccionado = spinnerAlimentosArray[idAlSeleccionado];
+                String alSeleccionado = spinnerAlimentosArray[idAlSeleccionado].toString(); //sobra?
+                //Obtenemos el correo con el que se ha logueado
+                SharedPreferences sharedPreferences = getContext()
+                        .getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
+                correoLog = sharedPreferences.getString("Email", "a"); //Habría que controlar en caso de que no se haya logueado
                 //fechaSeleccionada = sdf.format(new Date(calendar.getDate()));
-                regCalFragment.TareaWSEnviar tareaAsincrona = new regCalFragment.TareaWSEnviar();
+//                regCalFragment.TareaWSEnviar tareaAsincrona = new regCalFragment.TareaWSEnviar();
                 System.out.println("Fecha: "+fechaSeleccionada+" jsonAlimento: "+alSeleccionado);
-                tareaAsincrona.execute(alSeleccionado, fechaSeleccionada, nombreAlSel,
-                        fechaSeleccionada, tipoComidaSel, codigoAlSel, cantidadAlSel, correoLog);
+//                tareaAsincrona.execute(alSeleccionado, fechaSeleccionada, nombreAlSel,
+//                        fechaSeleccionada, tipoComidaSel, codigoAlSel, cantidadAlSel, correoLog);
+                introducirCalorias(alSeleccionado, fechaSeleccionada, nombreAlSel, fechaSeleccionada,
+                        tipoComidaSel, codigoAlSel, cantidadAlSel, correoLog);
             }
         });
         return v;
     }
 
-    public JSONArray obtenerAlimentos() { //Conexión para obtener alimentos
-        JSONArray jsonArray = new JSONArray();
+    public void obtenerAlimentos() { //Conexión para obtener alimentos
+        //final String emilio = emailIntrod;
+        //final String passwd = passwdIntrod;
+
+        Retrofit instRetrofit = new Retrofit.Builder().baseUrl(laUrl)
+                .addConverterFactory(GsonConverterFactory.create()).build();
+        aliService = instRetrofit.create(alimentosService.class);
+
+        Call<List<alimentos>> listaAlis = aliService.getAlimentos();
+
+        listaAlis.enqueue(new Callback<List<alimentos>>(){
+            @Override
+            public void onResponse(Call<List<alimentos>> call, Response<List<alimentos>> response){
+                if(response.isSuccessful()){
+                    listaAli = response.body();
+                }
+
+                for(int i = 0; i < listaAli.size(); i++){
+                    listaNombreAls.add(listaAli.get(i).getNombreAlimento());
+                    listaCodigoAls.add(listaAli.get(i).getCodigoAlimento().toString());
+                }
+
+            }
+            @Override
+            public void onFailure(Call<List<alimentos>> call, Throwable t) {
+
+            }
+        });
+
+
+        /*JSONArray jsonArray = new JSONArray();
         int SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (SDK_INT > 8)
         {
@@ -221,10 +243,56 @@ public class regCalFragment extends Fragment {
             }
 
         }
-        return jsonArray;
+        return jsonArray;*/
 
     }
-    @TargetApi(11)
+
+    private void introducirCalorias(String... params){
+        calorias calo = new calorias();
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(laUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        calService = retrofit.create(caloriasService.class);
+
+        //Introducimos valores en objeto caloria que enviaremos
+        calo.setEmailCaloria(params[7]);
+        calo.setFechaCaloria(params[1]);
+        calo.setTipocomidaCaloria(params[4]);
+        calo.setCodigoAlimentoCaloria(Integer.parseInt(params[5]));
+        calo.setCantidadCaloria(Integer.parseInt(params[6]));
+        //Introducimos el objt caloria en llamada
+        Call<calorias> p = calService.registrarCalorias(calo);
+        p.enqueue(new Callback<calorias>() {
+            @Override
+            public void onResponse(Call<calorias> call, Response<calorias> response) {
+                if(response.isSuccessful()){
+                    getActivity().runOnUiThread(new Runnable() {
+                        public void run() {
+                            Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                            vibrator.vibrate(60);
+                            Toast.makeText(getActivity(),"Registro realizado", Toast.LENGTH_SHORT).show();
+                            System.out.println("---> Reg Cal OK: Verificar en BD!");
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<calorias> call, final Throwable t) {
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                        Toast.makeText(getActivity(),"Registro fallido", Toast.LENGTH_SHORT).show();
+                        long[] pattern = { 0,60,50,60,50,60};
+                        vibrator.vibrate(pattern,-1);
+                        System.out.println("----->Onfailure de introducirCalorias: "+ t); //info del error
+                    }
+                });
+            }
+        });
+    }
+    /*@TargetApi(11)
     private class TareaWSEnviar extends AsyncTask<String, Integer, Boolean> {
 
         protected Boolean doInBackground(String... params) {
@@ -282,5 +350,5 @@ public class regCalFragment extends Fragment {
 
             }
         }
-    }
+    }*/
 }
