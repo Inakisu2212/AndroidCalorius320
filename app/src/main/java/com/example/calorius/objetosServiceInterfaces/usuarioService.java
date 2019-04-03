@@ -12,6 +12,6 @@ public interface usuarioService {
     @GET("api/usuarios")
     Call<List<usuario>> getUsuarios(); //Más de lo mismo, no se implementa al parecer.
 
-    @GET("api/usuarios/{email}")
-    Call<usuario> getUsuario(@Path("email") String email);
+    @GET("api/usuarios/obtenerUsuario/{email}/{password}")
+    Call<usuario> getObtenerUsuario(@Path("email") String email, @Path("password") String password);
 }

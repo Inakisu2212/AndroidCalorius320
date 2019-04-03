@@ -90,59 +90,61 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                 .addConverterFactory(GsonConverterFactory.create()).build();
         usuService = instRetrofit.create(usuarioService.class);
 
-        Call<usuario> elUsu = usuService.getUsuario(emilio);
+        Call<usuario> elUsu = usuService.getObtenerUsuario(emilio, passwd);
 
         elUsu.enqueue(new Callback<usuario>(){
             @Override
             public void onResponse(Call<usuario> call, Response<usuario> response){
-
-                elUsuario = response.body();
-                boolean correcto = false; //Para comprobar coindicendia email y passwd
+                if(response.isSuccessful()) {
+                    elUsuario = response.body();
+                    boolean correcto = false; //Para comprobar coindicendia email y passwd
 
                     String emails = elUsuario.getEmailUsuario();
                     String passwds = elUsuario.getPasswordUsuario();
-                    if(emails.equals(emilio) && passwds.equals(passwd) ){
+                    if (emails.equals(emilio) && passwds.equals(passwd)) {
                         correcto = true;
                     }
 
-                //Shared preferences
-                sharedPreferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
-                if(correcto){
-                    System.out.println("-----> Login correcto!");
-                    //Guardar información en sharedPreferences
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("Email", emilio);
-                    editor.putString("Contra",passwd);
-                    editor.commit();
+                    //Shared preferences
+                    sharedPreferences = getContext().getSharedPreferences("shared_prefs", Context.MODE_PRIVATE);
+                    if (correcto) {
+                        System.out.println("-----> Login correcto!");
+                        //Guardar información en sharedPreferences
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString("Email", emilio);
+                        editor.putString("Contra", passwd);
+                        editor.commit();
 
-                    //Que suelte un toast diciendo que es correcto
-                    getActivity().runOnUiThread(new Runnable() {
-                        public void run() {
-                            Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-                            vibrator.vibrate(60);
-                            Toast.makeText(getActivity(),"Login correcto", Toast.LENGTH_SHORT).show();
-                            //Actualizamos el header para que aparezca el nombre
-                            ((MainActivity)getActivity()).actualizarHeader();
-                        }
-                    });
+                        //Que suelte un toast diciendo que es correcto
+                        getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                                vibrator.vibrate(60);
+                                Toast.makeText(getActivity(), "Login correcto", Toast.LENGTH_SHORT).show();
+                                //Actualizamos el header para que aparezca el nombre
+                                ((MainActivity) getActivity()).actualizarHeader();
+                            }
+                        });
 
-                }else{
-                    //Que suelte un toast diciendo que es incorrecto
-                    getActivity().runOnUiThread(new Runnable() {
-                        public void run() {
-                            Toast.makeText(getActivity(),"Login incorrecto", Toast.LENGTH_SHORT).show();
-                            Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-                            long[] pattern = { 0,60,50,60,50,60};
-                            vibrator.vibrate(pattern,-1);
+                    } else {
+                        //Que suelte un toast diciendo que es incorrecto
+                        getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(getActivity(), "Login incorrecto", Toast.LENGTH_SHORT).show();
+                                Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                                long[] pattern = {0, 60, 50, 60, 50, 60};
+                                vibrator.vibrate(pattern, -1);
 
-                        }
-                    });
+                            }
+                        });
 
+                    }
                 }
             }
             @Override
             public void onFailure(Call<usuario> call, Throwable t) {
-
+                System.out.println("------>  Error al obtener el usuario. Comprobar si se han introducido " +
+                "correctamente el mail y la passwd");
             }
         });
 
