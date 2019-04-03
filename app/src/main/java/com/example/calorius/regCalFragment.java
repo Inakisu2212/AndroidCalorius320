@@ -47,9 +47,9 @@ public class regCalFragment extends Fragment {
     private String correoLog = "a";
     private Spinner dropdownCant;
     private final String laUrl = "http://10.111.66.10:567/";
-    //private alimentosService aliService;
+    private alimentosService aliService;
     private caloriasService calService;
-    private List<alimentos> listaAli = new ArrayList<alimentos>();
+    private List<alimentos> listaAli = new ArrayList<>();
     //private int numeroAlimento;
 
     private ArrayList<String> listaNombreAls;
@@ -185,28 +185,30 @@ public class regCalFragment extends Fragment {
         Retrofit instaRetrofit = new Retrofit.Builder().baseUrl(laUrl)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        alimentosService aliService = instaRetrofit.create(alimentosService.class);
+        aliService = instaRetrofit.create(alimentosService.class);
 
         Call<List<alimentos>> listaAlis = aliService.getAlimentos();
 
         listaAlis.enqueue(new Callback<List<alimentos>>(){
             @Override
             public void onResponse(Call<List<alimentos>> call, Response<List<alimentos>> response){
+                System.out.println("He entrado onResponse alimentos");
                 if(response.isSuccessful()){
                     listaAli = response.body();
+                    for(int i = 0; i < listaAli.size(); i++){
+                        listaNombreAls.add(listaAli.get(i).getNombreAlimento());
+                        listaCodigoAls.add(listaAli.get(i).getCodigoAlimento().toString());
+                    }
                 }else{
-                    System.out.println("---------> "+ response.errorBody());
+                    System.out.println("-----elsealimentos----> "+ response.errorBody());
                 }
 
-                for(int i = 0; i < listaAli.size(); i++){
-                    listaNombreAls.add(listaAli.get(i).getNombreAlimento());
-                    listaCodigoAls.add(listaAli.get(i).getCodigoAlimento().toString());
-                }
+
 
             }
             @Override
             public void onFailure(Call<List<alimentos>> call, Throwable t) {
-
+                System.out.println("----> Error obteniendo alimentos: "+ t);
             }
         });
 

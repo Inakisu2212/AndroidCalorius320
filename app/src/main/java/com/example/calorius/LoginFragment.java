@@ -143,6 +143,16 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
             }
             @Override
             public void onFailure(Call<usuario> call, Throwable t) {
+                //Que suelte un toast diciendo que es incorrecto
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(getActivity(), "Login incorrecto", Toast.LENGTH_SHORT).show();
+                        Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                        long[] pattern = {0, 60, 50, 60, 50, 60};
+                        vibrator.vibrate(pattern, -1);
+
+                    }
+                });
                 System.out.println("------>  Error al obtener el usuario. Comprobar si se han introducido " +
                 "correctamente el mail y la passwd");
             }
